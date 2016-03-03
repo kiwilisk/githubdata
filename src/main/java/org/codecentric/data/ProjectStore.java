@@ -17,32 +17,28 @@ import static org.codecentric.Sequences.SEQUENCE_ID;
 
 public class ProjectStore {
 
-    private final Collection<User> users;
-    private final Collection<org.eclipse.egit.github.core.Repository> repositories;
-    private final Collection<String> languageNames;
     private final LanguageStore languageStore;
     private final MemberStore memberStore;
     private final RepositoryStore repositoryStore;
+    private final DatabaseConnection databaseConnection;
 
-    public ProjectStore(Collection<User> users, Collection<org.eclipse.egit.github.core.Repository> repositories, Collection<String> languageNames, LanguageStore languageStore, MemberStore memberStore, RepositoryStore repositoryStore) {
-        this.users = users;
-        this.repositories = repositories;
-        this.languageNames = languageNames;
+    public ProjectStore(LanguageStore languageStore, MemberStore memberStore, RepositoryStore repositoryStore, DatabaseConnection databaseConnection) {
         this.languageStore = languageStore;
         this.memberStore = memberStore;
         this.repositoryStore = repositoryStore;
+        this.databaseConnection = databaseConnection;
     }
 
-    public void insert(DatabaseConnection databaseConnection) {
+    public void insert(Collection<User> users, Collection<org.eclipse.egit.github.core.Repository> repositories, Collection<String> languageNames) {
         databaseConnection.withTransaction(transaction -> {
             DSLContext context = DSL.using(transaction);
-            Collection<Language> languages = insertLanguages(context);
-            Collection<Member> members = insertMembers(context);
-            insertRepositories(context, languages, members);
+            Collection<Language> languages = insertLanguages(languageNames, context);
+            Collection<Member> members = insertMembers(users, context);
+            insertRepositories(repositories, languages, members, context);
         });
     }
 
-    private Collection<Language> insertLanguages(DSLContext create) {
+    private Collection<Language> insertLanguages(Collection<String> languageNames, DSLContext create) {
         Collection<Language> languages = languageNames.stream()
                 .map(language -> new Language(create.nextval(SEQUENCE_ID), language))
                 .collect(toList());
@@ -50,7 +46,7 @@ public class ProjectStore {
         return languages;
     }
 
-    private Collection<Member> insertMembers(DSLContext context) {
+    private Collection<Member> insertMembers(Collection<User> users, DSLContext context) {
         Collection<Member> members = users.stream()
                 .map(user -> new Member(context.nextval(SEQUENCE_ID), (long) user.getId(), user.getLogin()))
                 .collect(toList());
@@ -58,12 +54,12 @@ public class ProjectStore {
         return members;
     }
 
-    private void insertRepositories(DSLContext create, Collection<Language> languages, Collection<Member> members) {
+    private void insertRepositories(Collection<org.eclipse.egit.github.core.Repository> gitRepositories, Collection<Language> languages, Collection<Member> members, DSLContext context) {
         Map<String, Long> nameToLanguageId = languages.stream().collect(toMap(Language::getName, Language::getId));
         Map<String, Long> memberLoginToId = members.stream().collect(toMap(Member::getLogin, Member::getId));
-        Collection<Repository> repositories = this.repositories.stream()
-                .map(repository -> new Repository(create.nextval(SEQUENCE_ID), repository.getId(), repository.getName(), memberLoginToId.get(repository.getOwner().getLogin()), nameToLanguageId.get(repository.getLanguage())))
+        Collection<Repository> repositories = gitRepositories.stream()
+                .map(repository -> new Repository(context.nextval(SEQUENCE_ID), repository.getId(), repository.getName(), memberLoginToId.get(repository.getOwner().getLogin()), nameToLanguageId.get(repository.getLanguage())))
                 .collect(toList());
-        repositoryStore.insertAll(repositories, create);
+        repositoryStore.insertAll(repositories, context);
     }
 }

@@ -37,8 +37,8 @@ class Synchronize {
             Collection<String> languageNames = gitRepository.getLanguageNamesFrom(repositories);
 
             LOGGER.info("Starting import");
-            ProjectStore projectStore = new ProjectStore(usersOfCodecentric, repositories, languageNames, new LanguageStore(), new MemberStore(), new RepositoryStore());
-            projectStore.insert(ConnectionFactory.INSTANCE.get());
+            ProjectStore projectStore = new ProjectStore(new LanguageStore(), new MemberStore(), new RepositoryStore(), ConnectionFactory.INSTANCE.get());
+            projectStore.insert(usersOfCodecentric, repositories, languageNames);
             LOGGER.info("Done.");
         } catch (Exception e) {
             LOGGER.error("Could not load and insert data into database.", e);

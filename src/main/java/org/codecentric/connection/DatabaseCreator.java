@@ -8,11 +8,11 @@ import java.sql.Connection;
 import static org.jooq.impl.DSL.constraint;
 import static org.jooq.impl.DSL.count;
 
-public class DatabaseImpl {
+public class DatabaseCreator {
 
     private final DatabaseConnection databaseConnection;
 
-    public DatabaseImpl(DatabaseConnection databaseConnection) {
+    public DatabaseCreator(DatabaseConnection databaseConnection) {
         this.databaseConnection = databaseConnection;
     }
 

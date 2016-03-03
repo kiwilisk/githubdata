@@ -1,7 +1,7 @@
 package org.codecentric.data;
 
 import org.codecentric.connection.DatabaseConnection;
-import org.codecentric.connection.DatabaseImpl;
+import org.codecentric.connection.DatabaseCreator;
 import org.codecentric.connection.H2DatabaseConnection;
 import org.jooq.DSLContext;
 import org.junit.rules.TestRule;
@@ -40,7 +40,7 @@ public class TestDataBase implements TestRule {
     }
 
     private void createDatabase() {
-        DatabaseImpl database = new DatabaseImpl(getConnection());
+        DatabaseCreator database = new DatabaseCreator(getConnection());
         database.create();
     }
 

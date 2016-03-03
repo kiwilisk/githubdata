@@ -37,9 +37,12 @@ public class ProjectStoreIntegrationTest {
         scalaRepository.setLanguage("Scala");
         scalaRepository.setOwner(scalaUser);
         scalaRepository.setId(8796988L);
-        ProjectStore projectStore = new ProjectStore(asList(javaUser, scalaUser), asList(javaRepository, scalaRepository), asList("Java", "Scala"), new LanguageStore(), new MemberStore(), new RepositoryStore());
+        List<User> users = asList(javaUser, scalaUser);
+        List<Repository> repositories = asList(javaRepository, scalaRepository);
+        List<String> languageNames = asList("Java", "Scala");
+        ProjectStore projectStore = new ProjectStore(new LanguageStore(), new MemberStore(), new RepositoryStore(), dataBase.getConnection());
 
-        projectStore.insert(dataBase.getConnection());
+        projectStore.insert(users, repositories, languageNames);
 
         assertThat(loadRepositoryLanguages()).contains(new RepositoryLanguage("newLogin", "Java", 1L), new RepositoryLanguage("alsoNewLogin", "Scala", 1L));
     }
